@@ -1,0 +1,39 @@
+#!/bin/nu
+
+def main [algo] {
+  let results = (
+    1..50 | each {
+      let file = $'TestGrids/($in).txt'
+      let lines = (java assignment1.Main $file $'-($algo)' | lines)
+      let time = (
+        $lines.0
+        | parse '{algo} took {time}ms:'
+        | get time.0
+      )
+      let length = (
+        $lines.1
+        | parse '  A path with {n} vertices and a length of {length} was found.'
+        | get length.0
+      )
+      let vertices = (
+        $lines.2
+        | parse '  {closed} vertices are closed and {open} vertices remain open.'
+        | first
+      )
+      {
+        grid: $file
+        time: ($time | into int)
+        length: ($length | into decimal)
+        closed: ($vertices.closed | into int)
+        open: ($vertices.open | into int)
+      }
+    }
+  )
+  $results | append {
+    grid: "Average"
+    time: ($results.time | math avg)
+    length: ($results.length | math avg)
+    closed: ($results.closed | math avg)
+    open: ($results.open | math avg)
+  }
+}

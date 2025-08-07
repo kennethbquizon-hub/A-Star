@@ -1,0 +1,35 @@
+#!/bin/nu
+
+def main [trials algo gridLength] {
+  let wait = ([2 ($gridLength * $gridLength / 18500000 | math ceil | into int)] | math max)
+
+  let data = (
+    1..$trials
+    | each { |trial|
+      let pid = (./Scripts/fork java assignment1.Main $'-($algo)' -c $gridLength -r $gridLength -d 0.5 -w ($wait + 5) | into int)
+
+      sleep ($wait * 1sec | into duration)
+
+      let mem = (
+        jmap -histo:live $pid
+        | lines
+        | last
+        | parse -r 'Total\s+\d+\s+(?<mem>\d+)'
+        | get mem.0
+        | into filesize
+      )
+
+      ^kill $pid
+
+      {
+        trial: $trial
+        mem: $mem
+      }
+    }
+  )
+
+  $data | append {
+    trial: average
+    mem: ($data.mem | math avg)
+  }
+}

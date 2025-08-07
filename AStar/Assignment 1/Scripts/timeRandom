@@ -1,0 +1,26 @@
+#!/bin/nu
+
+def main [trials algo gridLength] {
+  let data = (
+    1..$trials
+    | each { |trial|
+      let time = (
+        java assignment1.Main $'-($algo)' -c $gridLength -r $gridLength -d 0.5
+        | lines
+        | get 0
+        | parse '{algo} took {time}ms:'
+        | get time.0
+        | into int
+      )
+      {
+        trial: $trial
+        time: $time
+      }
+    }
+  )
+
+  $data | append {
+    trial: average
+    time: ($data.time | math avg)
+  }
+}
